@@ -1,0 +1,25 @@
+{
+  "name": "classificador-produto",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node --test tests/",
+    "seed:catalog": "node scripts/seed-catalog.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
+    "@supabase/supabase-js": "^2.110.5"
+  },
+  "devDependencies": {
+    "xlsx": "^0.18.5"
+  }
+}
