@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js';
 import { findCatalogMatch } from './catalogMatch.js';
 import { renderCatalogBadge, renderTable } from './render.js';
+import { buildExportRows } from './xlsxExport.js';
 
 let catalogo = [];
 let produtos = [];
@@ -148,6 +149,15 @@ function applyRealtimeChange(payload) {
   renderTable(produtos, { onEdit: onEditProduto, onDelete: onDeleteProduto });
 }
 
+function exportToXlsx(rows) {
+  const data = buildExportRows(rows);
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Estoque');
+  const dateStr = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(workbook, `contagem-estoque-${dateStr}.xlsx`);
+}
+
 async function init() {
   const { data: catalogData, error: catalogError } = await supabase.from('catalogo_produtos').select('*');
   if (catalogError) {
@@ -174,6 +184,7 @@ async function init() {
 
   photoInput.addEventListener('change', handlePhotoSelected);
   addBtn.addEventListener('click', handleAdd);
+  exportBtn.addEventListener('click', () => exportToXlsx(produtos));
 }
 
 init();
