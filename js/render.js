@@ -9,3 +9,31 @@ export function renderCatalogBadge(match) {
     el.className = 'badge badge-new';
   }
 }
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+export function renderTable(produtos, handlers) {
+  const tbody = document.getElementById('produtos-tbody');
+  tbody.innerHTML = '';
+  for (const p of produtos) {
+    const tr = document.createElement('tr');
+    tr.dataset.id = p.id;
+    tr.innerHTML = `
+      <td>${escapeHtml(p.nome)}</td>
+      <td>${escapeHtml(p.tipo)}</td>
+      <td>${p.quantidade}</td>
+      <td class="col-acoes">
+        <button class="edit-btn" type="button">Editar</button>
+        <button class="delete-btn" type="button">Excluir</button>
+      </td>
+    `;
+    tr.querySelector('.edit-btn').addEventListener('click', () => handlers.onEdit(p));
+    tr.querySelector('.delete-btn').addEventListener('click', () => handlers.onDelete(p));
+    tbody.appendChild(tr);
+  }
+  document.getElementById('export-btn').disabled = produtos.length === 0;
+}

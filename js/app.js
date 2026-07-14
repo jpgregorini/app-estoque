@@ -1,8 +1,9 @@
 import { supabase } from './supabaseClient.js';
 import { findCatalogMatch } from './catalogMatch.js';
-import { renderCatalogBadge } from './render.js';
+import { renderCatalogBadge, renderTable } from './render.js';
 
 let catalogo = [];
+let produtos = [];
 let currentMatch = null;
 
 const photoInput = document.getElementById('photo-input');
@@ -11,6 +12,7 @@ const previewNome = document.getElementById('preview-nome');
 const previewTipo = document.getElementById('preview-tipo');
 const previewQuantidade = document.getElementById('preview-quantidade');
 const addBtn = document.getElementById('add-btn');
+const exportBtn = document.getElementById('export-btn');
 const toast = document.getElementById('toast');
 
 function showToast(message) {
@@ -79,6 +81,73 @@ async function handlePhotoSelected(event) {
   }
 }
 
+async function handleAdd() {
+  const nome = previewNome.value.trim();
+  const tipo = previewTipo.value;
+  const quantidade = Number(previewQuantidade.value);
+
+  if (!nome) return showToast('Preencha o nome do produto.');
+  if (!Number.isFinite(quantidade) || quantidade < 0) return showToast('Preencha uma quantidade válida.');
+
+  addBtn.disabled = true;
+  try {
+    const { error } = await supabase.from('produtos').insert({
+      nome,
+      tipo,
+      quantidade,
+      produto_novo: currentMatch === null,
+    });
+    if (error) throw error;
+    previewSection.hidden = true;
+  } catch (err) {
+    showToast(`Erro ao adicionar: ${err.message}`);
+  } finally {
+    addBtn.disabled = false;
+  }
+}
+
+async function onEditProduto(produto) {
+  const novoNome = window.prompt('Nome do produto:', produto.nome);
+  if (novoNome === null) return;
+  const novoTipo = window.prompt('Tipo (seco/resfriado/congelado):', produto.tipo);
+  if (novoTipo === null) return;
+  if (!['seco', 'resfriado', 'congelado'].includes(novoTipo)) {
+    window.alert('Tipo inválido. Use: seco, resfriado ou congelado.');
+    return;
+  }
+  const novaQuantidadeStr = window.prompt('Quantidade:', String(produto.quantidade));
+  if (novaQuantidadeStr === null) return;
+  const novaQuantidade = Number(novaQuantidadeStr);
+  if (!Number.isFinite(novaQuantidade) || novaQuantidade < 0) {
+    window.alert('Quantidade inválida.');
+    return;
+  }
+  const { error } = await supabase
+    .from('produtos')
+    .update({ nome: novoNome.trim(), tipo: novoTipo, quantidade: novaQuantidade })
+    .eq('id', produto.id);
+  if (error) window.alert(`Erro ao salvar: ${error.message}`);
+}
+
+async function onDeleteProduto(produto) {
+  if (!window.confirm(`Excluir "${produto.nome}"?`)) return;
+  const { error } = await supabase.from('produtos').delete().eq('id', produto.id);
+  if (error) window.alert(`Erro ao excluir: ${error.message}`);
+}
+
+function applyRealtimeChange(payload) {
+  if (payload.eventType === 'INSERT') {
+    produtos = [...produtos, payload.new].sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    );
+  } else if (payload.eventType === 'UPDATE') {
+    produtos = produtos.map((p) => (p.id === payload.new.id ? payload.new : p));
+  } else if (payload.eventType === 'DELETE') {
+    produtos = produtos.filter((p) => p.id !== payload.old.id);
+  }
+  renderTable(produtos, { onEdit: onEditProduto, onDelete: onDeleteProduto });
+}
+
 async function init() {
   const { data: catalogData, error: catalogError } = await supabase.from('catalogo_produtos').select('*');
   if (catalogError) {
@@ -87,7 +156,24 @@ async function init() {
     catalogo = catalogData;
   }
 
+  const { data: produtosData, error: produtosError } = await supabase
+    .from('produtos')
+    .select('*')
+    .order('created_at', { ascending: true });
+  if (produtosError) {
+    showToast(`Erro ao carregar tabela: ${produtosError.message}`);
+  } else {
+    produtos = produtosData;
+  }
+  renderTable(produtos, { onEdit: onEditProduto, onDelete: onDeleteProduto });
+
+  supabase
+    .channel('produtos-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos' }, applyRealtimeChange)
+    .subscribe();
+
   photoInput.addEventListener('change', handlePhotoSelected);
+  addBtn.addEventListener('click', handleAdd);
 }
 
 init();
