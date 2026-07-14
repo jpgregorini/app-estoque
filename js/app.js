@@ -132,17 +132,25 @@ async function onEditProduto(produto) {
 
 async function onDeleteProduto(produto) {
   if (!window.confirm(`Excluir "${produto.nome}"?`)) return;
-  const { error } = await supabase.from('produtos').delete().eq('id', produto.id);
+  const { error } = await supabase
+    .from('produtos')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', produto.id);
   if (error) window.alert(`Erro ao excluir: ${error.message}`);
 }
 
 function applyRealtimeChange(payload) {
   if (payload.eventType === 'INSERT') {
+    if (payload.new.deleted_at) return;
     produtos = [...produtos, payload.new].sort(
       (a, b) => new Date(a.created_at) - new Date(b.created_at)
     );
   } else if (payload.eventType === 'UPDATE') {
-    produtos = produtos.map((p) => (p.id === payload.new.id ? payload.new : p));
+    if (payload.new.deleted_at) {
+      produtos = produtos.filter((p) => p.id !== payload.new.id);
+    } else {
+      produtos = produtos.map((p) => (p.id === payload.new.id ? payload.new : p));
+    }
   } else if (payload.eventType === 'DELETE') {
     produtos = produtos.filter((p) => p.id !== payload.old.id);
   }
@@ -169,6 +177,7 @@ async function init() {
   const { data: produtosData, error: produtosError } = await supabase
     .from('produtos')
     .select('*')
+    .is('deleted_at', null)
     .order('created_at', { ascending: true });
   if (produtosError) {
     showToast(`Erro ao carregar tabela: ${produtosError.message}`);
