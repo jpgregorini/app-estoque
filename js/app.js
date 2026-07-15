@@ -85,10 +85,11 @@ async function handlePhotoSelected(event) {
 async function handleAdd() {
   const nome = previewNome.value.trim();
   const tipo = previewTipo.value;
-  const quantidade = Number(previewQuantidade.value);
+  const quantidadeStr = previewQuantidade.value.trim();
+  const quantidade = Number(quantidadeStr);
 
   if (!nome) return showToast('Preencha o nome do produto.');
-  if (!Number.isFinite(quantidade) || quantidade < 0) return showToast('Preencha uma quantidade válida.');
+  if (!quantidadeStr || !Number.isFinite(quantidade) || quantidade < 0) return showToast('Preencha uma quantidade válida.');
 
   addBtn.disabled = true;
   try {
