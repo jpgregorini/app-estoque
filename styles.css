@@ -79,6 +79,7 @@ button:disabled {
 
 .badge-found { background: #d4edda; color: #155724; }
 .badge-new { background: #fff3cd; color: #856404; }
+.badge-duplicate { background: #f8d7da; color: #721c24; }
 
 #toast {
   margin-top: 1rem;

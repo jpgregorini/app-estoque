@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js';
 import { findCatalogMatch } from './catalogMatch.js';
-import { renderCatalogBadge, renderTable } from './render.js';
+import { findDuplicateProduto } from './duplicateCheck.js';
+import { renderCatalogBadge, renderDuplicateBadge, renderTable } from './render.js';
 import { buildExportRows } from './xlsxExport.js';
 
 let catalogo = [];
@@ -58,6 +59,7 @@ async function handlePhotoSelected(event) {
   previewQuantidade.value = '';
   currentMatch = null;
   renderCatalogBadge(null);
+  renderDuplicateBadge(null);
 
   try {
     const { base64, mediaType } = await resizeImageForUpload(file);
@@ -75,6 +77,7 @@ async function handlePhotoSelected(event) {
     previewTipo.value = tipo;
     currentMatch = findCatalogMatch(nome_produto, catalogo);
     renderCatalogBadge(currentMatch);
+    renderDuplicateBadge(findDuplicateProduto(nome_produto, produtos));
   } catch (err) {
     showToast(`Não deu pra analisar a foto: ${err.message}. Preencha manualmente.`);
   } finally {

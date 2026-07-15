@@ -37,3 +37,15 @@ export function renderTable(produtos, handlers) {
   }
   document.getElementById('export-btn').disabled = produtos.length === 0;
 }
+
+export function renderDuplicateBadge(match) {
+  const el = document.getElementById('duplicate-badge');
+  if (match) {
+    el.textContent = `⚠ Possível duplicata: "${match.produto.nome}" já está na tabela com quantidade ${match.produto.quantidade}.`;
+    el.className = 'badge badge-duplicate';
+    el.hidden = false;
+  } else {
+    el.textContent = '';
+    el.hidden = true;
+  }
+}
