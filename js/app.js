@@ -4,6 +4,8 @@ import { findDuplicateProduto } from './duplicateCheck.js';
 import { renderCatalogBadge, renderDuplicateBadge, renderTable } from './render.js';
 import { buildExportRows } from './xlsxExport.js';
 
+const UNIDADES_VALIDAS = ['g', 'ml', 'kg', 'l'];
+
 let catalogo = [];
 let produtos = [];
 let currentMatch = null;
@@ -13,6 +15,8 @@ const previewSection = document.getElementById('preview-section');
 const previewNome = document.getElementById('preview-nome');
 const previewTipo = document.getElementById('preview-tipo');
 const previewQuantidade = document.getElementById('preview-quantidade');
+const previewPesoVolume = document.getElementById('preview-peso-volume');
+const previewUnidade = document.getElementById('preview-unidade');
 const addBtn = document.getElementById('add-btn');
 const exportBtn = document.getElementById('export-btn');
 const toast = document.getElementById('toast');
@@ -57,6 +61,8 @@ async function handlePhotoSelected(event) {
   previewNome.value = '';
   previewTipo.value = 'seco';
   previewQuantidade.value = '';
+  previewPesoVolume.value = '';
+  previewUnidade.value = '';
   currentMatch = null;
   renderCatalogBadge(null);
   renderDuplicateBadge(null);
@@ -72,9 +78,11 @@ async function handlePhotoSelected(event) {
       const body = await response.json().catch(() => ({}));
       throw new Error(body.error || `Erro ${response.status}`);
     }
-    const { nome_produto, tipo } = await response.json();
+    const { nome_produto, tipo, peso_volume_unidade, unidade_medida } = await response.json();
     previewNome.value = nome_produto;
     previewTipo.value = tipo;
+    previewPesoVolume.value = peso_volume_unidade ?? '';
+    previewUnidade.value = unidade_medida ?? '';
     currentMatch = findCatalogMatch(nome_produto, catalogo);
     renderCatalogBadge(currentMatch);
     renderDuplicateBadge(findDuplicateProduto(nome_produto, produtos));
@@ -90,9 +98,22 @@ async function handleAdd() {
   const tipo = previewTipo.value;
   const quantidadeStr = previewQuantidade.value.trim();
   const quantidade = Number(quantidadeStr);
+  const pesoVolumeStr = previewPesoVolume.value.trim();
+  const unidadeMedida = previewUnidade.value || null;
 
   if (!nome) return showToast('Preencha o nome do produto.');
   if (!quantidadeStr || !Number.isFinite(quantidade) || quantidade < 0) return showToast('Preencha uma quantidade válida.');
+
+  let pesoVolumeUnidade = null;
+  if (pesoVolumeStr || unidadeMedida) {
+    if (!pesoVolumeStr || !unidadeMedida) {
+      return showToast('Preencha peso/volume e unidade juntos, ou deixe os dois em branco.');
+    }
+    pesoVolumeUnidade = Number(pesoVolumeStr.replace(',', '.'));
+    if (!Number.isFinite(pesoVolumeUnidade) || pesoVolumeUnidade <= 0) {
+      return showToast('Peso/volume por unidade inválido.');
+    }
+  }
 
   addBtn.disabled = true;
   try {
@@ -101,6 +122,8 @@ async function handleAdd() {
       tipo,
       quantidade,
       produto_novo: currentMatch === null,
+      peso_volume_unidade: pesoVolumeUnidade,
+      unidade_medida: unidadeMedida,
     });
     if (error) throw error;
     previewSection.hidden = true;
@@ -127,9 +150,43 @@ async function onEditProduto(produto) {
     window.alert('Quantidade inválida.');
     return;
   }
+  const novoPesoVolumeStr = window.prompt(
+    'Peso/volume por unidade (deixe em branco se não souber):',
+    produto.peso_volume_unidade != null ? String(produto.peso_volume_unidade) : ''
+  );
+  if (novoPesoVolumeStr === null) return;
+  const novaUnidadeStr = window.prompt(
+    'Unidade (g/ml/kg/l — deixe em branco se peso/volume estiver em branco):',
+    produto.unidade_medida ?? ''
+  );
+  if (novaUnidadeStr === null) return;
+
+  const pesoVolumeTrim = novoPesoVolumeStr.trim();
+  const unidadeTrim = novaUnidadeStr.trim();
+  let novoPesoVolumeUnidade = null;
+  let novaUnidadeFinal = null;
+  if (pesoVolumeTrim || unidadeTrim) {
+    if (!pesoVolumeTrim || !unidadeTrim || !UNIDADES_VALIDAS.includes(unidadeTrim)) {
+      window.alert('Preencha peso/volume e uma unidade válida (g/ml/kg/l) juntos, ou deixe os dois em branco.');
+      return;
+    }
+    novoPesoVolumeUnidade = Number(pesoVolumeTrim.replace(',', '.'));
+    if (!Number.isFinite(novoPesoVolumeUnidade) || novoPesoVolumeUnidade <= 0) {
+      window.alert('Peso/volume por unidade inválido.');
+      return;
+    }
+    novaUnidadeFinal = unidadeTrim;
+  }
+
   const { error } = await supabase
     .from('produtos')
-    .update({ nome: novoNome.trim(), tipo: novoTipo, quantidade: novaQuantidade })
+    .update({
+      nome: novoNome.trim(),
+      tipo: novoTipo,
+      quantidade: novaQuantidade,
+      peso_volume_unidade: novoPesoVolumeUnidade,
+      unidade_medida: novaUnidadeFinal,
+    })
     .eq('id', produto.id);
   if (error) window.alert(`Erro ao salvar: ${error.message}`);
 }
