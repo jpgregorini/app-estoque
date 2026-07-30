@@ -36,6 +36,18 @@
         <label>Quantidade
           <input type="text" id="preview-quantidade" inputmode="numeric" pattern="[0-9]*" />
         </label>
+        <label>Peso/volume por unidade
+          <input type="text" id="preview-peso-volume" inputmode="decimal" />
+        </label>
+        <label>Unidade
+          <select id="preview-unidade">
+            <option value="">-</option>
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="kg">kg</option>
+            <option value="l">l</option>
+          </select>
+        </label>
         <button id="add-btn">Adicionar</button>
       </div>
     </section>
@@ -49,6 +61,8 @@
             <th>Nome</th>
             <th>Tipo</th>
             <th>Quantidade</th>
+            <th>Criado em</th>
+            <th>Qtd (KG/L)</th>
             <th></th>
           </tr>
         </thead>

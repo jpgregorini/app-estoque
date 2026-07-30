@@ -1,3 +1,6 @@
+import { calcularQuantidadeTotal } from './quantidadeTotal.js';
+import { formatDataHora, formatQuantidadeTotal } from './format.js';
+
 export function renderCatalogBadge(match) {
   const el = document.getElementById('catalog-badge');
   if (match) {
@@ -26,6 +29,8 @@ export function renderTable(produtos, handlers) {
       <td>${escapeHtml(p.nome)}</td>
       <td>${escapeHtml(p.tipo)}</td>
       <td>${p.quantidade}</td>
+      <td>${formatDataHora(p.created_at)}</td>
+      <td>${formatQuantidadeTotal(calcularQuantidadeTotal(p.peso_volume_unidade, p.unidade_medida, p.quantidade))}</td>
       <td class="col-acoes">
         <button class="edit-btn" type="button">Editar</button>
         <button class="delete-btn" type="button">Excluir</button>
