@@ -1,4 +1,5 @@
 export const TIPOS_VALIDOS = ['seco', 'resfriado', 'congelado'];
+export const UNIDADES_VALIDAS = ['g', 'ml', 'kg', 'l'];
 
 export function parseAnalyzeResponse(raw) {
   const cleaned = raw
@@ -21,5 +22,20 @@ export function parseAnalyzeResponse(raw) {
     throw new Error('tipo ausente ou inválido');
   }
 
-  return { nome_produto: data.nome_produto.trim(), tipo: data.tipo };
+  const pesoVolumeUnidade = data.peso_volume_unidade ?? null;
+  if (pesoVolumeUnidade !== null && typeof pesoVolumeUnidade !== 'number') {
+    throw new Error('peso_volume_unidade inválido');
+  }
+
+  const unidadeMedida = data.unidade_medida ?? null;
+  if (unidadeMedida !== null && !UNIDADES_VALIDAS.includes(unidadeMedida)) {
+    throw new Error('unidade_medida inválida');
+  }
+
+  return {
+    nome_produto: data.nome_produto.trim(),
+    tipo: data.tipo,
+    peso_volume_unidade: pesoVolumeUnidade,
+    unidade_medida: unidadeMedida,
+  };
 }

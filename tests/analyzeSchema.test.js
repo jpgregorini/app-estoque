@@ -4,12 +4,22 @@ import { parseAnalyzeResponse } from '../js/analyzeSchema.js';
 
 test('parseia resposta JSON válida', () => {
   const result = parseAnalyzeResponse('{"nome_produto": "REDBULL LATA 250ML", "tipo": "resfriado"}');
-  assert.deepEqual(result, { nome_produto: 'REDBULL LATA 250ML', tipo: 'resfriado' });
+  assert.deepEqual(result, {
+    nome_produto: 'REDBULL LATA 250ML',
+    tipo: 'resfriado',
+    peso_volume_unidade: null,
+    unidade_medida: null,
+  });
 });
 
 test('remove cercas de markdown antes de parsear', () => {
   const result = parseAnalyzeResponse('```json\n{"nome_produto": "ACAI POLPA 1KG", "tipo": "congelado"}\n```');
-  assert.deepEqual(result, { nome_produto: 'ACAI POLPA 1KG', tipo: 'congelado' });
+  assert.deepEqual(result, {
+    nome_produto: 'ACAI POLPA 1KG',
+    tipo: 'congelado',
+    peso_volume_unidade: null,
+    unidade_medida: null,
+  });
 });
 
 test('lança erro em JSON inválido', () => {
@@ -22,4 +32,23 @@ test('lança erro quando falta nome_produto', () => {
 
 test('lança erro quando tipo é inválido', () => {
   assert.throws(() => parseAnalyzeResponse('{"nome_produto": "X", "tipo": "quente"}'), /tipo/);
+});
+
+test('parseia peso_volume_unidade e unidade_medida quando presentes', () => {
+  const result = parseAnalyzeResponse(
+    '{"nome_produto": "REDBULL LATA 250ML", "tipo": "resfriado", "peso_volume_unidade": 250, "unidade_medida": "ml"}'
+  );
+  assert.deepEqual(result, {
+    nome_produto: 'REDBULL LATA 250ML',
+    tipo: 'resfriado',
+    peso_volume_unidade: 250,
+    unidade_medida: 'ml',
+  });
+});
+
+test('lança erro quando unidade_medida é inválida', () => {
+  assert.throws(
+    () => parseAnalyzeResponse('{"nome_produto": "X", "tipo": "seco", "peso_volume_unidade": 5, "unidade_medida": "litro"}'),
+    /unidade_medida/
+  );
 });
