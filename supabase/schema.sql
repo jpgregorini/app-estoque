@@ -5,7 +5,10 @@ create table if not exists produtos (
   quantidade integer not null check (quantidade >= 0),
   produto_novo boolean not null default false,
   created_at timestamptz not null default now(),
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  peso_volume_unidade numeric check (peso_volume_unidade is null or peso_volume_unidade > 0),
+  unidade_medida text check (unidade_medida is null or unidade_medida in ('g', 'ml', 'kg', 'l')),
+  constraint peso_volume_unidade_par check ((peso_volume_unidade is null) = (unidade_medida is null))
 );
 
 alter table produtos enable row level security;
