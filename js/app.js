@@ -162,7 +162,7 @@ async function onEditProduto(produto) {
   if (novaUnidadeStr === null) return;
 
   const pesoVolumeTrim = novoPesoVolumeStr.trim();
-  const unidadeTrim = novaUnidadeStr.trim();
+  const unidadeTrim = novaUnidadeStr.trim().toLowerCase();
   let novoPesoVolumeUnidade = null;
   let novaUnidadeFinal = null;
   if (pesoVolumeTrim || unidadeTrim) {

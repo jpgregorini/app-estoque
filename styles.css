@@ -90,8 +90,13 @@ button:disabled {
 .toast-error { background: #f8d7da; color: #721c24; }
 .toast-ok { background: #d4edda; color: #155724; }
 
+#table-section {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   margin-top: 1rem;
   background: white;
