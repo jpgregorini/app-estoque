@@ -1,12 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { parseAnalyzeResponse, TIPOS_VALIDOS } from '../js/analyzeSchema.js';
+import { parseAnalyzeResponse, TIPOS_VALIDOS, UNIDADES_VALIDAS } from '../js/analyzeSchema.js';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const MAX_BASE64_LENGTH = 6_000_000;
 
 const SYSTEM_PROMPT = `Você analisa fotos de produtos de um estoque de supermercado/restaurante.
 Responda SOMENTE com um JSON, sem markdown, no formato exato:
-{"nome_produto": "MARCA PRODUTO EMBALAGEM", "tipo": "seco"}
+{"nome_produto": "MARCA PRODUTO EMBALAGEM", "tipo": "seco", "peso_volume_unidade": 250, "unidade_medida": "ml"}
 
 Regras pro campo "nome_produto":
 - Maiúsculo, compacto, no estilo "REDBULL LATA 250ML" ou "MAIONESE HELLMANS 500G".
@@ -16,6 +16,11 @@ Regras pro campo "tipo": deve ser exatamente um destes valores: ${TIPOS_VALIDOS.
 - "congelado": produto visivelmente congelado ou de freezer/embalagem para congelados.
 - "resfriado": produto de geladeira/refrigerado (laticínios, frios, bebidas geladas, etc).
 - "seco": mantimento de prateleira, não perecível na embalagem original.
+
+Regras pros campos "peso_volume_unidade" e "unidade_medida":
+- "peso_volume_unidade": o peso ou volume de UMA unidade do produto (não multiplique pela quantidade de unidades), como número (ex: 250, 500, 5).
+- "unidade_medida": deve ser exatamente um destes valores: ${UNIDADES_VALIDAS.join(', ')}, correspondendo à unidade lida na embalagem (gramas, mililitros, quilos ou litros).
+- Se a embalagem não mostrar peso ou volume (ex: produto vendido por unidade/peça, sem peso declarado), responda "peso_volume_unidade": null e "unidade_medida": null. Não invente um valor.
 
 Se não conseguir identificar algo com confiança, faça sua melhor estimativa —
 nunca deixe de responder no formato JSON pedido.`;
