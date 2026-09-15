@@ -16,9 +16,23 @@ test('formatDataHora usa os campos locais da data (dia/mês/ano/hora/minuto com 
   assert.equal(formatDataHora(iso), esperado);
 });
 
-test('formatQuantidadeTotal formata com 3 casas decimais e a unidade', () => {
+test('formatQuantidadeTotal usa vírgula decimal (pt-BR) e unidade maiúscula', () => {
   const resultado = calcularQuantidadeTotal(500, 'g', 3);
-  assert.equal(formatQuantidadeTotal(resultado), '1.500 kg');
+  assert.equal(formatQuantidadeTotal(resultado), '1,5 KG');
+});
+
+test('formatQuantidadeTotal não mostra casas decimais em valor inteiro (açúcar 2KG x 50)', () => {
+  const resultado = calcularQuantidadeTotal(2, 'kg', 50);
+  assert.equal(formatQuantidadeTotal(resultado), '100 KG');
+});
+
+test('formatQuantidadeTotal usa ponto só como separador de milhar', () => {
+  const resultado = calcularQuantidadeTotal(1, 'l', 1500);
+  assert.equal(formatQuantidadeTotal(resultado), '1.500 L');
+});
+
+test('formatQuantidadeTotal limita a 3 casas decimais', () => {
+  assert.equal(formatQuantidadeTotal({ valor: 0.3333333, unidade: 'kg' }), '0,333 KG');
 });
 
 test('formatQuantidadeTotal retorna "-" quando o resultado é null', () => {

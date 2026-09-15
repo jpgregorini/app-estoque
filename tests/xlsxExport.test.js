@@ -31,7 +31,7 @@ test('ordena por created_at e renumera ID sequencialmente', () => {
       QUANTIDADE: 10,
       TIPO: 'resfriado',
       'DATA DE CRIAÇÃO': formatDataHora('2026-07-14T09:00:00Z'),
-      'QUANTIDADE (KG/L)': '2.500 l',
+      'QUANTIDADE (KG/L)': '2,5 L',
     },
     {
       ID: 2,
@@ -39,7 +39,7 @@ test('ordena por created_at e renumera ID sequencialmente', () => {
       QUANTIDADE: 3,
       TIPO: 'seco',
       'DATA DE CRIAÇÃO': formatDataHora('2026-07-14T10:05:00Z'),
-      'QUANTIDADE (KG/L)': '1.500 kg',
+      'QUANTIDADE (KG/L)': '1,5 KG',
     },
   ]);
 });
