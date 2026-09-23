@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient.js';
 import { findCatalogMatch } from './catalogMatch.js';
 import { findDuplicateProduto } from './duplicateCheck.js';
 import { renderCatalogBadge, renderDuplicateBadge, renderTable } from './render.js';
+import { filtrarProdutos } from './searchProdutos.js';
 import { buildExportRows } from './xlsxExport.js';
 
 const UNIDADES_VALIDAS = ['g', 'ml', 'kg', 'l'];
@@ -9,6 +10,7 @@ const UNIDADES_VALIDAS = ['g', 'ml', 'kg', 'l'];
 let catalogo = [];
 let produtos = [];
 let currentMatch = null;
+let termoBusca = '';
 
 const photoInput = document.getElementById('photo-input');
 const previewSection = document.getElementById('preview-section');
@@ -19,7 +21,22 @@ const previewPesoVolume = document.getElementById('preview-peso-volume');
 const previewUnidade = document.getElementById('preview-unidade');
 const addBtn = document.getElementById('add-btn');
 const exportBtn = document.getElementById('export-btn');
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
 const toast = document.getElementById('toast');
+
+function renderProdutos() {
+  renderTable(filtrarProdutos(produtos, termoBusca), { onEdit: onEditProduto, onDelete: onDeleteProduto }, {
+    termo: termoBusca,
+    totalProdutos: produtos.length,
+  });
+}
+
+function onBuscaChange(valor) {
+  termoBusca = valor;
+  searchClear.hidden = valor.trim() === '';
+  renderProdutos();
+}
 
 function showToast(message) {
   toast.textContent = message;
@@ -215,7 +232,7 @@ function applyRealtimeChange(payload) {
   } else if (payload.eventType === 'DELETE') {
     produtos = produtos.filter((p) => p.id !== payload.old.id);
   }
-  renderTable(produtos, { onEdit: onEditProduto, onDelete: onDeleteProduto });
+  renderProdutos();
 }
 
 function exportToXlsx(rows) {
@@ -245,13 +262,19 @@ async function init() {
   } else {
     produtos = produtosData;
   }
-  renderTable(produtos, { onEdit: onEditProduto, onDelete: onDeleteProduto });
+  renderProdutos();
 
   supabase
     .channel('produtos-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos' }, applyRealtimeChange)
     .subscribe();
 
+  searchInput.addEventListener('input', (event) => onBuscaChange(event.target.value));
+  searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    onBuscaChange('');
+    searchInput.focus();
+  });
   photoInput.addEventListener('change', handlePhotoSelected);
   addBtn.addEventListener('click', handleAdd);
   exportBtn.addEventListener('click', () => exportToXlsx(produtos));

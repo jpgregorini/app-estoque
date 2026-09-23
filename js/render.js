@@ -19,9 +19,15 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-export function renderTable(produtos, handlers) {
+export function renderTable(produtos, handlers, opcoes = {}) {
+  const { termo = '', totalProdutos = produtos.length } = opcoes;
   const tbody = document.getElementById('produtos-tbody');
   tbody.innerHTML = '';
+  if (produtos.length === 0 && termo.trim()) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="6" class="sem-resultado">Nenhum produto encontrado para "${escapeHtml(termo)}".</td>`;
+    tbody.appendChild(tr);
+  }
   for (const p of produtos) {
     const tr = document.createElement('tr');
     tr.dataset.id = p.id;
@@ -40,7 +46,7 @@ export function renderTable(produtos, handlers) {
     tr.querySelector('.delete-btn').addEventListener('click', () => handlers.onDelete(p));
     tbody.appendChild(tr);
   }
-  document.getElementById('export-btn').disabled = produtos.length === 0;
+  document.getElementById('export-btn').disabled = totalProdutos === 0;
 }
 
 export function renderDuplicateBadge(match) {
